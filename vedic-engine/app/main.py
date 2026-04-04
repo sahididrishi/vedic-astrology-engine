@@ -1,4 +1,5 @@
 import time
+import uuid
 from contextlib import asynccontextmanager
 
 import redis.asyncio as aioredis
@@ -26,7 +27,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    # Shutdown
+    # Shutdown — finish in-flight requests handled by uvicorn; close connections
     if app.state.redis:
         await app.state.redis.close()
     logger.info("Vedic Astrology Engine stopped")
@@ -48,11 +49,25 @@ app.add_middleware(
 
 
 @app.middleware("http")
-async def add_request_timing(request: Request, call_next):
+async def add_request_context(request: Request, call_next):
+    """Add request ID and timing to every request."""
+    request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+    request.state.request_id = request_id
     request.state.start_time = time.time()
+
     response = await call_next(request)
+
     duration_ms = int((time.time() - request.state.start_time) * 1000)
+    response.headers["X-Request-ID"] = request_id
     response.headers["X-Processing-Time-Ms"] = str(duration_ms)
+
+    logger.info(
+        f"{request.method} {request.url.path} {response.status_code} {duration_ms}ms",
+        extra={"request_id": request_id, "method": request.method,
+               "path": request.url.path, "status": response.status_code,
+               "duration_ms": duration_ms},
+    )
+
     return response
 
 
@@ -79,13 +94,16 @@ async def health_check(request: Request):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error(f"Unhandled error: {exc}", exc_info=True)
+    request_id = getattr(request.state, "request_id", "unknown")
+    logger.error(f"Unhandled error: {exc}", exc_info=True,
+                 extra={"request_id": request_id})
     return JSONResponse(
         status_code=500,
         content={
             "error_code": "INTERNAL_ERROR",
             "message": "An unexpected error occurred",
             "suggestion": "Please retry. If this persists, contact support.",
+            "request_id": request_id,
         },
     )
 

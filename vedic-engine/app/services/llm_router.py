@@ -27,7 +27,10 @@ class ProviderCircuitBreaker:
         self.disabled_until: dict[str, float] = {}
 
     def record_failure(self, name: str):
-        self.failures[name] = self.failures.get(name, 0) + 1
+        current = self.failures.get(name, 0)
+        if current >= 3:
+            return  # already tripped — don't pile up count during cooldown
+        self.failures[name] = current + 1
         if self.failures[name] >= 3:
             self.disabled_until[name] = time.time() + CIRCUIT_BREAK_SECONDS
             logger.warning(f"Circuit breaker tripped for {name} — disabled for 5 min")
@@ -269,5 +272,21 @@ def _check_quota(resp: httpx.Response, provider: str):
         raise QuotaExceededError(f"{provider} returned 429 — quota exceeded or rate limited")
 
 
-# Module-level singleton
-router = LLMRouter()
+# Lazy-initialized singleton — reads env vars on first access, not at import time
+_router_instance: Optional[LLMRouter] = None
+
+
+def _get_router() -> LLMRouter:
+    global _router_instance
+    if _router_instance is None:
+        _router_instance = LLMRouter()
+    return _router_instance
+
+
+class _LazyRouter:
+    """Proxy that defers LLMRouter construction until first attribute access."""
+    def __getattr__(self, name):
+        return getattr(_get_router(), name)
+
+
+router = _LazyRouter()

@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.models.database import fetch_reading, store_reading
 from app.models.schemas import BirthInput, ReadingResponse
 from app.services.ai_client import generate_reading
 from app.services.orchestrator import DataOrchestrator
@@ -16,9 +17,9 @@ from app.utils.rate_limiter import check_rate_limit
 
 router = APIRouter(prefix="/api/v1", tags=["reading"])
 
-# In-memory store with bounded size (production should use PostgreSQL)
+# In-memory fallback when DB is unavailable (bounded)
 _MAX_STORE_SIZE = 10000
-_readings_store: dict[str, dict] = {}
+_readings_fallback: dict[str, dict] = {}
 
 
 def _get_orchestrator(request: Request) -> DataOrchestrator:
@@ -34,6 +35,7 @@ async def create_reading(
 ):
     await check_rate_limit(request)
     start_time = time.time()
+    request_id = getattr(request.state, "request_id", "unknown")
 
     try:
         orchestrator = _get_orchestrator(request)
@@ -73,11 +75,28 @@ async def create_reading(
             processing_time_ms=processing_ms,
         )
 
-        # Store reading (evict oldest if at capacity)
-        if len(_readings_store) >= _MAX_STORE_SIZE:
-            oldest_key = next(iter(_readings_store))
-            del _readings_store[oldest_key]
-        _readings_store[str(reading_id)] = response.model_dump(mode="json")
+        response_json = response.model_dump(mode="json")
+
+        # Store in DB (non-blocking — failure here doesn't fail the request)
+        from app.services.llm_router import router as llm_router
+        provider = getattr(llm_router, "last_provider_used", "unknown")
+        db_ok = await store_reading(
+            str(reading_id), birth_dict, response_json,
+            provider=provider, processing_ms=processing_ms,
+        )
+
+        # In-memory fallback if DB write failed
+        if not db_ok:
+            if len(_readings_fallback) >= _MAX_STORE_SIZE:
+                oldest_key = next(iter(_readings_fallback))
+                del _readings_fallback[oldest_key]
+            _readings_fallback[str(reading_id)] = response_json
+
+        logger.info(
+            f"Reading generated",
+            extra={"reading_id": str(reading_id), "request_id": request_id,
+                   "processing_ms": processing_ms, "db_stored": db_ok},
+        )
 
         return response
 
@@ -101,7 +120,13 @@ async def get_reading(
     reading_id: str,
     _token: str = Depends(verify_api_key),
 ):
-    reading = _readings_store.get(reading_id)
+    # Try database first
+    reading = await fetch_reading(reading_id)
+
+    # Fallback to in-memory
+    if not reading:
+        reading = _readings_fallback.get(reading_id)
+
     if not reading:
         raise HTTPException(status_code=404, detail={
             "error_code": "NOT_FOUND",

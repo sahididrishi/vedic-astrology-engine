@@ -11,6 +11,7 @@ pyswisseph>=2.10
 python-json-logger>=2.0
 tenacity>=8.0
 python-dotenv>=1.0
+tzdata>=2024.1  # Required on Windows for zoneinfo IANA timezone support
 
 # Testing
 pytest>=8.0
