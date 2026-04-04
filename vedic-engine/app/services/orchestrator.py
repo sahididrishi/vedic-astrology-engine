@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, time as dt_time, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -147,21 +147,30 @@ class DataOrchestrator:
         """Call external astrology API for chart data."""
         raise NotImplementedError("Configure ASTROLOGY_API_KEY for external chart API")
 
+    def _parse_date(self, val) -> date:
+        """Parse date from date object or ISO string."""
+        if isinstance(val, date) and not isinstance(val, datetime):
+            return val
+        return date.fromisoformat(str(val)[:10])
+
+    def _parse_time(self, val) -> dt_time:
+        """Parse time from time object or ISO string."""
+        if isinstance(val, dt_time):
+            return val
+        return dt_time.fromisoformat(str(val))
+
     def _to_utc(self, birth_input: dict, location: dict) -> datetime:
         """Convert local birth time to UTC using IANA timezone (handles historical DST)."""
+        b_date = self._parse_date(birth_input["birth_date"])
+        b_time = self._parse_time(birth_input["birth_time"])
         tz_id = location.get("timezone_id", "UTC")
         try:
             tz = ZoneInfo(tz_id)
-            local_dt = datetime.combine(
-                birth_input["birth_date"],
-                birth_input["birth_time"],
-                tzinfo=tz,
-            )
+            local_dt = datetime.combine(b_date, b_time, tzinfo=tz)
             return local_dt.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
         except Exception:
-            # Fallback to static offset only if timezone lookup fails
             utc_offset_hours = location.get("utc_offset", 0)
-            local_dt = datetime.combine(birth_input["birth_date"], birth_input["birth_time"])
+            local_dt = datetime.combine(b_date, b_time)
             return local_dt - timedelta(hours=utc_offset_hours)
 
     def _cache_key(self, birth_input: dict) -> str:
