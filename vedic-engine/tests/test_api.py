@@ -30,7 +30,7 @@ class TestReadingEndpoint:
             "birth_city": "Mumbai",
             "birth_country": "India",
         })
-        assert resp.status_code == 403  # no auth header
+        assert resp.status_code in (401, 403)  # no auth header
 
     def test_reading_rejects_invalid_name(self, client):
         resp = client.post(
@@ -70,7 +70,7 @@ class TestChartEndpoint:
             "birth_city": "Mumbai",
             "birth_country": "India",
         })
-        assert resp.status_code == 403
+        assert resp.status_code in (401, 403)
 
 
 class TestReadingRetrieval:

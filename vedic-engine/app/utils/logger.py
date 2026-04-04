@@ -1,7 +1,11 @@
 import logging
 import sys
 
-from pythonjsonlogger import jsonlogger
+try:
+    from pythonjsonlogger.json import JsonFormatter
+except ImportError:
+    from pythonjsonlogger import jsonlogger
+    JsonFormatter = jsonlogger.JsonFormatter
 
 
 def setup_logger(name: str = "vedic_engine", level: int = logging.INFO) -> logging.Logger:
@@ -12,7 +16,7 @@ def setup_logger(name: str = "vedic_engine", level: int = logging.INFO) -> loggi
     logger.setLevel(level)
 
     handler = logging.StreamHandler(sys.stdout)
-    formatter = jsonlogger.JsonFormatter(
+    formatter = JsonFormatter(
         fmt="%(asctime)s %(name)s %(levelname)s %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S",
     )
