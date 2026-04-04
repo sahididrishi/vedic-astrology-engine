@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vedic Astrology Engine — Demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #333; }
+  .container { max-width: 640px; margin: 40px auto; padding: 0 20px; }
+  h1 { font-size: 22px; color: #1a1a2e; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: #888; margin-bottom: 28px; }
+  .card { background: white; border-radius: 12px; padding: 28px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); margin-bottom: 20px; }
+  label { font-size: 13px; font-weight: 500; color: #555; display: block; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; outline: none; transition: border 0.2s; }
+  input:focus, select:focus { border-color: #1a1a2e; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { margin-bottom: 16px; }
+  .btn { width: 100%; padding: 12px; background: #1a1a2e; color: white; border: none; border-radius: 8px; font-size: 15px; cursor: pointer; transition: background 0.2s; }
+  .btn:hover { background: #2d2d4e; }
+  .btn:disabled { background: #999; cursor: not-allowed; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #fff; border-top-color: transparent; border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .error { color: #c0392b; font-size: 13px; margin-top: 12px; padding: 10px; background: #ffeaea; border-radius: 8px; display: none; }
+  .result { display: none; margin-top: 20px; }
+  .result h2 { font-size: 16px; color: #1a1a2e; margin-bottom: 12px; }
+  .overview { font-size: 15px; color: #444; line-height: 1.7; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+  .section { margin-bottom: 20px; }
+  .section h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #1a1a2e; margin-bottom: 6px; }
+  .section p { font-size: 14px; color: #444; line-height: 1.7; }
+  .section ul { margin-top: 8px; padding-left: 18px; }
+  .section li { font-size: 13px; color: #555; margin-bottom: 4px; }
+  .periods { background: #f8f8f8; border-radius: 8px; padding: 14px; margin-bottom: 16px; }
+  .periods h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; color: #888; margin-bottom: 10px; }
+  .period-item { margin-bottom: 8px; font-size: 13px; }
+  .period-item strong { font-weight: 600; }
+  .closing { font-size: 14px; color: #555; font-style: italic; border-top: 1px solid #eee; padding-top: 12px; }
+  .meta { font-size: 11px; color: #aaa; margin-top: 12px; }
+  .toggle-raw { font-size: 12px; color: #1a1a2e; cursor: pointer; text-decoration: underline; margin-top: 8px; display: inline-block; }
+  .raw-json { display: none; margin-top: 12px; background: #1a1a2e; color: #a8e6cf; padding: 16px; border-radius: 8px; font-size: 12px; font-family: monospace; white-space: pre-wrap; max-height: 400px; overflow-y: auto; }
+  .config { font-size: 12px; color: #aaa; text-align: center; margin-top: 20px; }
+  .config input { width: auto; display: inline; font-size: 12px; padding: 4px 8px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Vedic Astrology Predictive Engine</h1>
+  <p class="subtitle">Logic-Driven AI — Consulting-Quality Readings</p>
+
+  <div class="card">
+    <form id="ve-form">
+      <div class="field">
+        <label>Full name</label>
+        <input type="text" name="full_name" required placeholder="e.g. Arjun Sharma">
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Birth date</label>
+          <input type="date" name="birth_date" required>
+        </div>
+        <div class="field">
+          <label>Birth time (24h)</label>
+          <input type="time" name="birth_time" required>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Birth city</label>
+          <input type="text" name="birth_city" required placeholder="e.g. Mumbai">
+        </div>
+        <div class="field">
+          <label>Country</label>
+          <input type="text" name="birth_country" required placeholder="e.g. India">
+        </div>
+      </div>
+      <div class="field">
+        <label>Reading focus</label>
+        <select name="reading_type">
+          <option value="general">General life reading</option>
+          <option value="career">Career &amp; purpose</option>
+          <option value="relationships">Relationships</option>
+          <option value="finance">Finance &amp; wealth</option>
+          <option value="health">Health &amp; wellbeing</option>
+        </select>
+      </div>
+      <button type="submit" class="btn" id="ve-submit">Get my reading</button>
+    </form>
+    <div class="error" id="ve-error"></div>
+  </div>
+
+  <div class="result card" id="ve-result"></div>
+
+  <div class="config">
+    API: <input type="text" id="cfg-url" value="http://localhost:8000/api/v1/reading" style="width:300px">
+    Key: <input type="password" id="cfg-key" value="dev-api-key" style="width:140px">
+  </div>
+</div>
+
+<script>
+document.getElementById('ve-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('ve-submit');
+  const result = document.getElementById('ve-result');
+  const errBox = document.getElementById('ve-error');
+  const apiUrl = document.getElementById('cfg-url').value;
+  const apiKey = document.getElementById('cfg-key').value;
+
+  btn.innerHTML = '<span class="spinner"></span>Generating reading...';
+  btn.disabled = true;
+  errBox.style.display = 'none';
+  result.style.display = 'none';
+
+  const fd = new FormData(e.target);
+  const payload = Object.fromEntries(fd.entries());
+
+  try {
+    const resp = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + apiKey },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.detail?.message || err.detail || 'API error: ' + resp.status);
+    }
+    const data = await resp.json();
+    result.style.display = 'block';
+    result.innerHTML = renderReading(data);
+  } catch(err) {
+    errBox.style.display = 'block';
+    errBox.textContent = err.message;
+  } finally {
+    btn.textContent = 'Get my reading';
+    btn.disabled = false;
+  }
+});
+
+function renderReading(data) {
+  let html = '<h2>Reading for ' + esc(data.subject_name) + '</h2>';
+  html += '<p class="overview">' + esc(data.overview) + '</p>';
+
+  (data.sections || []).forEach(function(s) {
+    html += '<div class="section">';
+    html += '<h3>' + esc(s.title) + '</h3>';
+    html += '<p>' + esc(s.insight) + '</p>';
+    if (s.actions && s.actions.length) {
+      html += '<ul>';
+      s.actions.forEach(function(a) { html += '<li>' + esc(a) + '</li>'; });
+      html += '</ul>';
+    }
+    html += '</div>';
+  });
+
+  if (data.key_periods && data.key_periods.length) {
+    html += '<div class="periods"><h3>Key periods ahead</h3>';
+    data.key_periods.forEach(function(kp) {
+      html += '<div class="period-item"><strong>' + esc(kp.period) + '</strong> — ' + esc(kp.theme) + ': ' + esc(kp.guidance) + '</div>';
+    });
+    html += '</div>';
+  }
+
+  if (data.closing) {
+    html += '<p class="closing">' + esc(data.closing) + '</p>';
+  }
+
+  html += '<div class="meta">Processed in ' + (data.processing_time_ms || 0) + 'ms | ID: ' + (data.reading_id || '-') + '</div>';
+  html += '<span class="toggle-raw" onclick="toggleRaw()">View raw JSON</span>';
+  html += '<pre class="raw-json" id="raw-json">' + esc(JSON.stringify(data, null, 2)) + '</pre>';
+
+  return html;
+}
+
+function toggleRaw() {
+  var el = document.getElementById('raw-json');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function esc(s) {
+  if (!s) return '';
+  var d = document.createElement('div');
+  d.appendChild(document.createTextNode(s));
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
