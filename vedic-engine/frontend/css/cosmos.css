@@ -1,0 +1,203 @@
+/* ═══════════════════════════════════════════════════════════════
+   COSMOS.CSS — Base layer: stars, space, sacred geometry, resets
+   ═══════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Void */
+  --void: #060a1a;
+  --void-light: #0c1230;
+  --void-surface: #111842;
+
+  /* Gold spectrum */
+  --gold: #D2AC47;
+  --gold-dim: #AE8625;
+  --gold-bright: #F7EF8A;
+  --gold-gradient: linear-gradient(135deg, #AE8625, #F7EF8A, #D2AC47, #EDC967);
+  --gold-glow: 0 0 30px rgba(210, 172, 71, 0.15);
+  --gold-text: linear-gradient(135deg, #D2AC47 0%, #F7EF8A 45%, #EDC967 100%);
+
+  /* Violet */
+  --violet: #5D3587;
+  --violet-dim: #3a1f5c;
+  --violet-glow: rgba(93, 53, 135, 0.2);
+
+  /* Surfaces */
+  --glass: rgba(12, 18, 48, 0.65);
+  --glass-border: rgba(210, 172, 71, 0.08);
+  --glass-hover: rgba(18, 24, 66, 0.75);
+
+  /* Text */
+  --text: #e8e4dc;
+  --text-dim: #8a8697;
+  --text-muted: #5a5670;
+
+  /* Planets */
+  --planet-sun: #cd7f32;
+  --planet-moon: #c0c0c0;
+  --planet-mars: #c0392b;
+  --planet-mercury: #2ecc71;
+  --planet-jupiter: #d4a017;
+  --planet-venus: #ecf0f1;
+  --planet-saturn: #4a6fa5;
+  --planet-rahu: #7f8c8d;
+  --planet-ketu: #95a5a6;
+
+  /* Severity */
+  --severity-high: #e74c3c;
+  --severity-moderate: #e67e22;
+  --severity-mild: #27ae60;
+  --severity-cancelled: #7f8c8d;
+
+  /* Yoga strength */
+  --strength-strong: #D2AC47;
+  --strength-moderate: #a08030;
+  --strength-mild: #6a5520;
+
+  /* Type */
+  --font-display: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --font-body: 'Outfit', -apple-system, 'Segoe UI', sans-serif;
+
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+  --space-2xl: 4rem;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 999px;
+}
+
+/* ─── Reset ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  color: var(--text);
+  background: var(--void);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ─── Starfield ─── */
+.starfield {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.stars {
+  position: absolute;
+  inset: 0;
+  background-repeat: repeat;
+  will-change: transform;
+}
+
+.stars--sm {
+  background-image:
+    radial-gradient(1px 1px at 50px 100px, #ffffff44, transparent),
+    radial-gradient(1px 1px at 150px 250px, #ffffff33, transparent),
+    radial-gradient(1px 1px at 300px 80px, #ffffff22, transparent),
+    radial-gradient(1px 1px at 450px 320px, #ffffff33, transparent),
+    radial-gradient(1px 1px at 80px 400px, #ffffff22, transparent),
+    radial-gradient(1px 1px at 520px 180px, #ffffff28, transparent),
+    radial-gradient(1px 1px at 200px 500px, #ffffff30, transparent),
+    radial-gradient(1px 1px at 600px 420px, #ffffff20, transparent);
+  background-size: 650px 550px;
+  animation: drift 180s linear infinite;
+}
+
+.stars--md {
+  background-image:
+    radial-gradient(1.5px 1.5px at 120px 200px, #ffffff55, transparent),
+    radial-gradient(1.5px 1.5px at 380px 150px, #ffffff44, transparent),
+    radial-gradient(1.5px 1.5px at 250px 380px, #ffffff33, transparent),
+    radial-gradient(1.5px 1.5px at 500px 300px, #ffffff44, transparent),
+    radial-gradient(1.5px 1.5px at 60px 480px, #ffffff38, transparent);
+  background-size: 600px 500px;
+  animation: drift 240s linear infinite reverse;
+}
+
+.stars--lg {
+  background-image:
+    radial-gradient(2px 2px at 200px 300px, #D2AC4740, transparent),
+    radial-gradient(2.5px 2.5px at 450px 100px, #ffffff55, transparent),
+    radial-gradient(2px 2px at 100px 450px, #D2AC4730, transparent);
+  background-size: 550px 500px;
+  animation: drift 300s linear infinite, twinkle 4s ease-in-out infinite alternate;
+}
+
+@keyframes drift {
+  from { transform: translateY(0); }
+  to { transform: translateY(-500px); }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* ─── Yantra Background ─── */
+.yantra-bg {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(90vw, 800px);
+  height: min(90vw, 800px);
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  animation: slowRotate 300s linear infinite;
+}
+
+@keyframes slowRotate {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* ─── Sections ─── */
+.section {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-lg);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.8s;
+  overflow-y: auto;
+}
+
+.section--active {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ─── Gold text gradient ─── */
+.gold-text {
+  background: var(--gold-text);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+
+/* ─── Selection ─── */
+::selection { background: rgba(210, 172, 71, 0.3); color: #fff; }

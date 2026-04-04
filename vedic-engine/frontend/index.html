@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jyotish — Vedic Astrology Engine</title>
+  <meta name="description" content="Ancient Vedic wisdom meets modern precision. Get a consulting-quality astrological reading powered by Swiss Ephemeris and AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/cosmos.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/reading.css">
+</head>
+<body>
+
+  <!-- ═══ STAR FIELD ═══ -->
+  <div class="starfield">
+    <div class="stars stars--sm"></div>
+    <div class="stars stars--md"></div>
+    <div class="stars stars--lg"></div>
+  </div>
+
+  <!-- ═══ SACRED GEOMETRY OVERLAY ═══ -->
+  <svg class="yantra-bg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="yantraGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="#D2AC47" stop-opacity="0.06"/>
+        <stop offset="100%" stop-color="#D2AC47" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <circle cx="400" cy="400" r="300" fill="none" stroke="url(#yantraGlow)" stroke-width="0.5"/>
+    <circle cx="400" cy="400" r="200" fill="none" stroke="#D2AC4710" stroke-width="0.5"/>
+    <circle cx="400" cy="400" r="100" fill="none" stroke="#D2AC4708" stroke-width="0.5"/>
+    <polygon points="400,130 630,530 170,530" fill="none" stroke="#D2AC470A" stroke-width="0.5"/>
+    <polygon points="400,670 170,270 630,270" fill="none" stroke="#D2AC470A" stroke-width="0.5"/>
+  </svg>
+
+  <!-- ═══ MAIN APP ═══ -->
+  <div id="app">
+
+    <!-- SECTION: HERO -->
+    <section id="hero" class="section section--active">
+      <div class="hero__content">
+        <div class="hero__sigil">
+          <svg viewBox="0 0 120 120" class="sigil-svg">
+            <circle cx="60" cy="60" r="55" fill="none" stroke="url(#goldGrad)" stroke-width="0.8" opacity="0.6"/>
+            <circle cx="60" cy="60" r="40" fill="none" stroke="url(#goldGrad)" stroke-width="0.5" opacity="0.4"/>
+            <circle cx="60" cy="60" r="3" fill="#D2AC47" opacity="0.8"/>
+            <line x1="60" y1="5" x2="60" y2="25" stroke="#D2AC47" stroke-width="0.5" opacity="0.3"/>
+            <line x1="60" y1="95" x2="60" y2="115" stroke="#D2AC47" stroke-width="0.5" opacity="0.3"/>
+            <line x1="5" y1="60" x2="25" y2="60" stroke="#D2AC47" stroke-width="0.5" opacity="0.3"/>
+            <line x1="95" y1="60" x2="115" y2="60" stroke="#D2AC47" stroke-width="0.5" opacity="0.3"/>
+            <defs>
+              <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#AE8625"/>
+                <stop offset="50%" stop-color="#F7EF8A"/>
+                <stop offset="100%" stop-color="#D2AC47"/>
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+        <p class="hero__sanskrit">ज्योतिष</p>
+        <h1 class="hero__title">Ancient Wisdom.<br><span class="gold-text">Modern Precision.</span></h1>
+        <p class="hero__subtitle">Vedic astrology readings powered by Swiss Ephemeris calculations, classical yoga and dosha analysis, and AI interpretation — delivered as a structured consulting brief.</p>
+        <div class="hero__features">
+          <span class="feature-tag">Sidereal Zodiac</span>
+          <span class="feature-tag">Lahiri Ayanamsa</span>
+          <span class="feature-tag">Vimshottari Dasha</span>
+          <span class="feature-tag">5 Yoga Detectors</span>
+        </div>
+        <button class="btn btn--primary" onclick="goToSection('form')">
+          <span>Begin Your Reading</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </button>
+        <p class="hero__note">No sign-up required. Your birth data is never stored.</p>
+      </div>
+    </section>
+
+    <!-- SECTION: MULTI-STEP FORM -->
+    <section id="form" class="section">
+      <div class="form-container">
+        <div class="form__progress">
+          <div class="progress-step active" data-step="1"><span>1</span><small>Identity</small></div>
+          <div class="progress-line"><div class="progress-line__fill" id="progressFill"></div></div>
+          <div class="progress-step" data-step="2"><span>2</span><small>Birth</small></div>
+          <div class="progress-line"><div class="progress-line__fill"></div></div>
+          <div class="progress-step" data-step="3"><span>3</span><small>Focus</small></div>
+        </div>
+
+        <form id="readingForm" novalidate>
+          <!-- Step 1: Identity -->
+          <div class="form-step active" data-step="1">
+            <h2 class="form-step__title">Who are you?</h2>
+            <p class="form-step__desc">Your name as it is known to you — this anchors the reading.</p>
+            <div class="field">
+              <label for="full_name">Full Name</label>
+              <input type="text" id="full_name" name="full_name" placeholder="e.g. Arjun Sharma" required autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="gender">Gender <span class="optional">(optional)</span></label>
+              <div class="radio-group">
+                <label class="radio-card"><input type="radio" name="gender" value="male"><span>Male</span></label>
+                <label class="radio-card"><input type="radio" name="gender" value="female"><span>Female</span></label>
+                <label class="radio-card"><input type="radio" name="gender" value="other"><span>Other</span></label>
+              </div>
+            </div>
+            <button type="button" class="btn btn--primary btn--full" onclick="nextStep()">Continue</button>
+          </div>
+
+          <!-- Step 2: Birth Data -->
+          <div class="form-step" data-step="2">
+            <h2 class="form-step__title">When were you born?</h2>
+            <p class="form-step__desc">Precise birth time is critical — even a few minutes shift the ascendant and house cusps.</p>
+            <div class="field-row">
+              <div class="field">
+                <label for="birth_date">Birth Date</label>
+                <input type="date" id="birth_date" name="birth_date" required>
+              </div>
+              <div class="field">
+                <label for="birth_time">Birth Time <span class="hint">(24h)</span></label>
+                <input type="time" id="birth_time" name="birth_time" required>
+              </div>
+            </div>
+            <div class="field-row">
+              <button type="button" class="btn btn--ghost" onclick="prevStep()">Back</button>
+              <button type="button" class="btn btn--primary" onclick="nextStep()">Continue</button>
+            </div>
+          </div>
+
+          <!-- Step 3: Location & Focus -->
+          <div class="form-step" data-step="3">
+            <h2 class="form-step__title">Where, and what to focus on?</h2>
+            <p class="form-step__desc">Birth location determines your ascendant. Reading focus shapes the AI analysis.</p>
+            <div class="field-row">
+              <div class="field">
+                <label for="birth_city">Birth City</label>
+                <input type="text" id="birth_city" name="birth_city" placeholder="e.g. Mumbai" required>
+              </div>
+              <div class="field">
+                <label for="birth_country">Country</label>
+                <input type="text" id="birth_country" name="birth_country" placeholder="e.g. India" required>
+              </div>
+            </div>
+            <div class="field">
+              <label>Reading Focus</label>
+              <div class="focus-grid">
+                <label class="focus-card active"><input type="radio" name="reading_type" value="general" checked><span class="focus-icon">&#9737;</span><span>General</span></label>
+                <label class="focus-card"><input type="radio" name="reading_type" value="career"><span class="focus-icon">&#9878;</span><span>Career</span></label>
+                <label class="focus-card"><input type="radio" name="reading_type" value="relationships"><span class="focus-icon">&#9829;</span><span>Relationships</span></label>
+                <label class="focus-card"><input type="radio" name="reading_type" value="finance"><span class="focus-icon">&#9830;</span><span>Finance</span></label>
+                <label class="focus-card"><input type="radio" name="reading_type" value="health"><span class="focus-icon">&#9764;</span><span>Health</span></label>
+              </div>
+            </div>
+            <div class="field-row">
+              <button type="button" class="btn btn--ghost" onclick="prevStep()">Back</button>
+              <button type="submit" class="btn btn--primary" id="submitBtn">
+                <span>Generate Reading</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- SECTION: LOADING / ORACLE -->
+    <section id="loading" class="section">
+      <div class="oracle">
+        <div class="oracle__mandala">
+          <svg viewBox="0 0 400 400" class="mandala-svg">
+            <defs>
+              <linearGradient id="mGold" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#AE8625"/><stop offset="50%" stop-color="#F7EF8A"/><stop offset="100%" stop-color="#D2AC47"/>
+              </linearGradient>
+            </defs>
+            <!-- Outer ring -->
+            <circle cx="200" cy="200" r="180" fill="none" stroke="url(#mGold)" stroke-width="1" class="mandala-ring ring--outer" opacity="0.3"/>
+            <!-- Middle ring -->
+            <circle cx="200" cy="200" r="130" fill="none" stroke="url(#mGold)" stroke-width="0.8" class="mandala-ring ring--mid" opacity="0.2"/>
+            <!-- Inner ring -->
+            <circle cx="200" cy="200" r="80" fill="none" stroke="url(#mGold)" stroke-width="0.6" class="mandala-ring ring--inner" opacity="0.15"/>
+            <!-- Triangle up -->
+            <polygon points="200,40 360,320 40,320" fill="none" stroke="#D2AC47" stroke-width="0.6" class="mandala-tri tri--up" opacity="0"/>
+            <!-- Triangle down -->
+            <polygon points="200,360 40,80 360,80" fill="none" stroke="#D2AC47" stroke-width="0.6" class="mandala-tri tri--down" opacity="0"/>
+            <!-- Center bindu -->
+            <circle cx="200" cy="200" r="4" fill="#D2AC47" class="mandala-bindu" opacity="0"/>
+            <!-- Planet markers (placed dynamically) -->
+            <g class="planet-markers"></g>
+          </svg>
+        </div>
+        <div class="oracle__status">
+          <p class="oracle__step" id="oracleStep">Preparing your celestial map...</p>
+          <div class="oracle__progress-bar"><div class="oracle__progress-fill" id="oracleProgress"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: READING RESULTS -->
+    <section id="reading" class="section">
+      <div class="reading-container" id="readingContent">
+        <!-- Populated by JS -->
+      </div>
+    </section>
+
+    <!-- SECTION: ERROR -->
+    <section id="error" class="section">
+      <div class="error-container">
+        <div class="error__icon">&#9888;</div>
+        <h2 class="error__title">Something went wrong</h2>
+        <p class="error__message" id="errorMessage">An unexpected error occurred.</p>
+        <button class="btn btn--primary" onclick="goToSection('form')">Try Again</button>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- CONFIG (editable) -->
+  <div class="config-bar" id="configBar">
+    <button class="config-toggle" onclick="toggleConfig()" title="Settings">&#9881;</button>
+    <div class="config-panel" id="configPanel">
+      <label>API URL<input type="text" id="cfgUrl" value="http://localhost:8000"></label>
+      <label>API Key<input type="password" id="cfgKey" value=""></label>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/reading-renderer.js"></script>
+</body>
+</html>
