@@ -3,6 +3,13 @@
 from datetime import datetime, timedelta
 from typing import Optional
 
+
+def _ordinal(n: int) -> str:
+    """Return ordinal string for a number (1st, 2nd, 3rd, 4th, etc.)."""
+    if 11 <= (n % 100) <= 13:
+        return f"{n}th"
+    return f"{n}{['th','st','nd','rd','th','th','th','th','th','th'][n % 10]}"
+
 from app.services.vedic_data import (
     DIG_BALA,
     DEBILITATION_SIGNS,
@@ -219,8 +226,8 @@ class VedicLogicEngine:
                     "strength": strength,
                     "forming_planets": [trik_lord.value],
                     "description": (
-                        f"Lord of {trik_h}{'st' if trik_h == 1 else 'th'} house "
-                        f"({trik_lord.value}) placed in {trik_house}th house (kendra)"
+                        f"Lord of {_ordinal(trik_h)} house "
+                        f"({trik_lord.value}) placed in {_ordinal(trik_house)} house (kendra)"
                     ),
                     "life_area_impact": ["career", "authority", "success"],
                 })
@@ -241,8 +248,8 @@ class VedicLogicEngine:
                     "strength": strength,
                     "forming_planets": [kend_lord.value],
                     "description": (
-                        f"Lord of {kend_h}th house ({kend_lord.value}) "
-                        f"placed in {kend_house}th house (trikona)"
+                        f"Lord of {_ordinal(kend_h)} house ({kend_lord.value}) "
+                        f"placed in {_ordinal(kend_house)} house (trikona)"
                     ),
                     "life_area_impact": ["career", "authority", "success"],
                 })
@@ -432,6 +439,8 @@ class VedicLogicEngine:
         ]
 
         def all_between(start: float, end: float) -> bool:
+            if not other_planets:
+                return False  # Cannot form Kaal Sarpa without planets to hem
             for p in other_planets:
                 deg = p["absolute_degree"]
                 if start < end:
@@ -517,10 +526,13 @@ class VedicLogicEngine:
         starting_lord = NAKSHATRA_LORDS[nak_index]
 
         # Find lord in vimshottari sequence
-        lord_idx = next(
-            i for i, (p, _) in enumerate(VIMSHOTTARI_LORDS)
-            if p == starting_lord
-        )
+        try:
+            lord_idx = next(
+                i for i, (p, _) in enumerate(VIMSHOTTARI_LORDS)
+                if p == starting_lord
+            )
+        except StopIteration:
+            return self._empty_dasha()
 
         # Fraction of nakshatra elapsed at birth
         degree_in_nak = moon_longitude % NAKSHATRA_SPAN
@@ -660,7 +672,6 @@ class VedicLogicEngine:
 
     def _parse_birth_dt(self, chart_data: dict) -> datetime:
         """Try to extract birth datetime from chart data or birth input."""
-        # Try common field names
         for key in ("birth_datetime", "birth_date"):
             if key in chart_data:
                 val = chart_data[key]
@@ -668,9 +679,16 @@ class VedicLogicEngine:
                     return val
                 try:
                     return datetime.fromisoformat(str(val))
-                except (ValueError, TypeError):
-                    pass
-        return datetime(1990, 1, 1)  # fallback
+                except (ValueError, TypeError) as e:
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        f"Could not parse birth datetime from '{key}': {val!r} — {e}"
+                    )
+        import logging
+        logging.getLogger(__name__).error(
+            "No valid birth_datetime in chart_data; dasha anchored to fallback 1990-01-01"
+        )
+        return datetime(1990, 1, 1)
 
     def _empty_dasha(self) -> dict:
         return {

@@ -121,7 +121,7 @@ class LLMRouter:
             raise AllProvidersFailedError("No LLM providers configured")
 
         last_error: Optional[Exception] = None
-        for provider in self.providers:
+        for provider in list(self.providers):  # snapshot to avoid race with set_preferred
             name = provider["name"]
             if not self.breaker.is_available(name):
                 logger.debug(f"Skipping {name} — circuit breaker active")
@@ -150,7 +150,10 @@ class LLMRouter:
         raise AllProvidersFailedError(f"All LLM providers failed. Last error: {last_error}")
 
     def set_preferred(self, provider_name: str):
-        self.providers.sort(key=lambda p: 0 if p["name"] == provider_name else 1)
+        # Atomic replacement instead of in-place sort to avoid race conditions
+        self.providers = sorted(
+            self.providers, key=lambda p: 0 if p["name"] == provider_name else 1
+        )
         logger.info(f"Preferred provider set to {provider_name}")
 
     def get_status(self) -> list[dict]:

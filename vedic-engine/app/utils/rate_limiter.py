@@ -10,6 +10,7 @@ async def check_rate_limit(request: Request) -> None:
     settings = get_settings()
     redis = getattr(request.app.state, "redis", None)
     if not redis:
+        logger.warning("Rate limiting unavailable — Redis down")
         return
 
     auth = request.headers.get("Authorization", "anonymous")
@@ -27,7 +28,7 @@ async def check_rate_limit(request: Request) -> None:
         results = await pipe.execute()
         count = results[2]
 
-        if count > limit:
+        if count >= limit:
             raise HTTPException(
                 status_code=429,
                 detail={

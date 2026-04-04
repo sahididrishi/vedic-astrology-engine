@@ -112,7 +112,8 @@ def calculate_planet_positions(utc_dt: datetime, lat: float, lng: float) -> dict
 
 def get_current_saturn_sign() -> int:
     """Get Saturn's current sidereal sign index (1-12) for Sade Sati check."""
-    jd = get_julian_day(datetime.utcnow())
+    from datetime import timezone as tz
+    jd = get_julian_day(datetime.now(tz.utc).replace(tzinfo=None))
     pos, _ = swe.calc_ut(jd, swe.SATURN, swe.FLG_SIDEREAL)
     return int(pos[0] / 30) + 1
 

@@ -28,6 +28,7 @@ async def call_with_retry(
     attempt: int = 0,
 ) -> dict:
     """Call LLM with retry and escalating correction on JSON failures."""
+    raw: str = ""  # guard: ensures 'raw' is always bound
     try:
         raw = await llm_router.complete(system_prompt, user_prompt)
         return parse_ai_response(raw)
@@ -35,7 +36,8 @@ async def call_with_retry(
     except json.JSONDecodeError as e:
         logger.warning(f"JSON parse failed on attempt {attempt + 1}: {e}")
         if attempt < MAX_RETRIES - 1:
-            await asyncio.sleep(RETRY_DELAYS[attempt])
+            delay = RETRY_DELAYS[min(attempt, len(RETRY_DELAYS) - 1)]
+            await asyncio.sleep(delay)
             corrected_prompt = (
                 user_prompt
                 + "\n\nCRITICAL: Your previous response was not valid JSON. "
@@ -50,7 +52,8 @@ async def call_with_retry(
     except Exception as e:
         logger.error(f"LLM API error on attempt {attempt + 1}: {e}")
         if attempt < MAX_RETRIES - 1:
-            await asyncio.sleep(RETRY_DELAYS[attempt])
+            delay = RETRY_DELAYS[min(attempt, len(RETRY_DELAYS) - 1)]
+            await asyncio.sleep(delay)
             return await call_with_retry(system_prompt, user_prompt, attempt + 1)
         raise
 

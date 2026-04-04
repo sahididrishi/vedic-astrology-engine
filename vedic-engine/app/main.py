@@ -41,6 +41,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
     allow_methods=["POST", "GET"],
     allow_headers=["Authorization", "Content-Type"],
 )
@@ -65,10 +66,15 @@ async def health_check(request: Request):
         except Exception:
             pass
 
-    return {
-        "status": "ok",
-        "redis": "connected" if redis_ok else "unavailable",
-    }
+    status = "ok" if redis_ok else "degraded"
+    status_code = 200 if redis_ok else 503
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": status,
+            "redis": "connected" if redis_ok else "unavailable",
+        },
+    )
 
 
 @app.exception_handler(Exception)

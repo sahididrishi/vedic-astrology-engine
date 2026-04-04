@@ -2,7 +2,8 @@
 
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -34,20 +35,20 @@ class DataOrchestrator:
             birth_input["birth_city"], birth_input["birth_country"]
         )
 
-        # Step 2: Get chart data
+        # Step 2: Convert birth time to UTC (handles DST via IANA timezone)
+        utc_birth_dt = self._to_utc(birth_input, location)
+
+        # Step 3: Get chart data
         chart_data = await self.get_vedic_chart(birth_input, location)
 
-        # Step 3: Enrich with logic engine
+        # Anchor dasha to UTC birth time (same as ephemeris input)
+        chart_data["birth_datetime"] = utc_birth_dt.isoformat()
+
+        # Step 4: Enrich with logic engine
         try:
             current_saturn = get_current_saturn_sign()
         except Exception:
             current_saturn = None
-
-        # Build birth datetime for dasha calculation
-        birth_dt = datetime.combine(
-            birth_input["birth_date"], birth_input["birth_time"]
-        )
-        chart_data["birth_datetime"] = birth_dt.isoformat()
 
         enriched = logic_engine.enrich(
             chart_data,
@@ -144,15 +145,24 @@ class DataOrchestrator:
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, max=10))
     async def _call_astrology_api(self, birth_input: dict, location: dict) -> dict:
         """Call external astrology API for chart data."""
-        # Placeholder — implement when specific API is chosen
         raise NotImplementedError("Configure ASTROLOGY_API_KEY for external chart API")
 
     def _to_utc(self, birth_input: dict, location: dict) -> datetime:
-        """Convert local birth time to UTC."""
-        local_dt = datetime.combine(birth_input["birth_date"], birth_input["birth_time"])
-        utc_offset_hours = location.get("utc_offset", 0)
-        from datetime import timedelta
-        return local_dt - timedelta(hours=utc_offset_hours)
+        """Convert local birth time to UTC using IANA timezone (handles historical DST)."""
+        tz_id = location.get("timezone_id", "UTC")
+        try:
+            tz = ZoneInfo(tz_id)
+            local_dt = datetime.combine(
+                birth_input["birth_date"],
+                birth_input["birth_time"],
+                tzinfo=tz,
+            )
+            return local_dt.astimezone(ZoneInfo("UTC")).replace(tzinfo=None)
+        except Exception:
+            # Fallback to static offset only if timezone lookup fails
+            utc_offset_hours = location.get("utc_offset", 0)
+            local_dt = datetime.combine(birth_input["birth_date"], birth_input["birth_time"])
+            return local_dt - timedelta(hours=utc_offset_hours)
 
     def _cache_key(self, birth_input: dict) -> str:
         raw = json.dumps(

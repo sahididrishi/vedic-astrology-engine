@@ -2,7 +2,7 @@
 
 import time
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -16,7 +16,8 @@ from app.utils.rate_limiter import check_rate_limit
 
 router = APIRouter(prefix="/api/v1", tags=["reading"])
 
-# In-memory store for readings (replace with DB in production)
+# In-memory store with bounded size (production should use PostgreSQL)
+_MAX_STORE_SIZE = 10000
 _readings_store: dict[str, dict] = {}
 
 
@@ -49,7 +50,7 @@ async def create_reading(
 
         response = ReadingResponse(
             reading_id=reading_id,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             subject_name=birth_input.full_name,
             reading_type=birth_input.reading_type,
             overview=ai_result.get("overview", ""),
@@ -72,7 +73,10 @@ async def create_reading(
             processing_time_ms=processing_ms,
         )
 
-        # Store reading
+        # Store reading (evict oldest if at capacity)
+        if len(_readings_store) >= _MAX_STORE_SIZE:
+            oldest_key = next(iter(_readings_store))
+            del _readings_store[oldest_key]
         _readings_store[str(reading_id)] = response.model_dump(mode="json")
 
         return response
@@ -93,7 +97,10 @@ async def create_reading(
 
 
 @router.get("/reading/{reading_id}")
-async def get_reading(reading_id: str):
+async def get_reading(
+    reading_id: str,
+    _token: str = Depends(verify_api_key),
+):
     reading = _readings_store.get(reading_id)
     if not reading:
         raise HTTPException(status_code=404, detail={

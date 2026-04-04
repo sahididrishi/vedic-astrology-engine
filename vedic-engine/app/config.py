@@ -24,8 +24,8 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
     DATABASE_URL: str = "postgresql+asyncpg://vedic:vedic@localhost:5432/vedic"
 
-    # App Config
-    API_KEY: str = "dev-api-key"
+    # App Config — API_KEY has no default; app fails to start if not set
+    API_KEY: str
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
     EPHE_PATH: str = "./ephe"
 
