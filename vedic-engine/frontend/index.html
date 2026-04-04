@@ -14,27 +14,8 @@
 </head>
 <body>
 
-  <!-- ═══ STAR FIELD ═══ -->
-  <div class="starfield">
-    <div class="stars stars--sm"></div>
-    <div class="stars stars--md"></div>
-    <div class="stars stars--lg"></div>
-  </div>
-
-  <!-- ═══ SACRED GEOMETRY OVERLAY ═══ -->
-  <svg class="yantra-bg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      <radialGradient id="yantraGlow" cx="50%" cy="50%" r="50%">
-        <stop offset="0%" stop-color="#D2AC47" stop-opacity="0.06"/>
-        <stop offset="100%" stop-color="#D2AC47" stop-opacity="0"/>
-      </radialGradient>
-    </defs>
-    <circle cx="400" cy="400" r="300" fill="none" stroke="url(#yantraGlow)" stroke-width="0.5"/>
-    <circle cx="400" cy="400" r="200" fill="none" stroke="#D2AC4710" stroke-width="0.5"/>
-    <circle cx="400" cy="400" r="100" fill="none" stroke="#D2AC4708" stroke-width="0.5"/>
-    <polygon points="400,130 630,530 170,530" fill="none" stroke="#D2AC470A" stroke-width="0.5"/>
-    <polygon points="400,670 170,270 630,270" fill="none" stroke="#D2AC470A" stroke-width="0.5"/>
-  </svg>
+  <!-- ═══ LIVING COSMOS — Canvas with orbiting planets, twinkling stars, shooting stars ═══ -->
+  <canvas id="cosmosCanvas" class="cosmos-canvas"></canvas>
 
   <!-- ═══ MAIN APP ═══ -->
   <div id="app">
@@ -225,6 +206,7 @@
     </div>
   </div>
 
+  <script src="js/cosmos.js"></script>
   <script src="js/app.js"></script>
   <script src="js/reading-renderer.js"></script>
 </body>
